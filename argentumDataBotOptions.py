@@ -13,13 +13,13 @@ if byma_data.isworkingDay():
     options_df = byma_data.get_options()
 
     # Agregar la fecha actual como columna en el DataFrame
-    # fecha_hoy = datetime.now().strftime("%Y-%m-%d")
-    # options_df['date'] = fecha_hoy
+    fecha_hoy = datetime.now().strftime("%Y-%m-%d")
+    options_df['date'] = fecha_hoy
     
     # Obtener la fecha de ayer
-    fecha_ayer = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
-    options_df['date'] = fecha_ayer
-    fecha_hoy = fecha_ayer
+    # fecha_ayer = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
+    # options_df['date'] = fecha_ayer
+    # fecha_hoy = fecha_ayer
     
     # Nombre del archivo CSV con los datos acumulados
     nombre_archivo = "opciones_historial.csv"

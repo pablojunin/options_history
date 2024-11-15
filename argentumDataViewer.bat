@@ -1,2 +1,2 @@
 @echo off
-python .argentumDataViewer.py
+python .\argentumDataViewer.py
