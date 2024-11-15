@@ -1,0 +1,12 @@
+# Ignorar la carpeta de backups
+back/
+
+# Ignorar archivos de backup de opciones
+opciones_historial_backup*
+
+# Ignorar archivos temporales y de sistema
+.DS_Store
+*.log
+__pycache__/
+*.pyc
+.env
