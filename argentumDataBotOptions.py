@@ -16,12 +16,12 @@ def get_price(symbol: str) -> float:
 
     # Intentar buscar en blue chips
     df_bluechips = byma_data.get_bluechips()
-    pd.set_option('display.max_rows', None)
-    pd.set_option('display.max_columns', None)
-    pd.set_option('display.width', None)
-    pd.set_option('display.max_colwidth', None)
-    
+    # pd.set_option('display.max_rows', None)
+    # pd.set_option('display.max_columns', None)
+    # pd.set_option('display.width', None)
+    # pd.set_option('display.max_colwidth', None)
     # print(df_bluechips)
+    
     if not df_bluechips.empty and symbol in df_bluechips['symbol'].values:
         price = df_bluechips[df_bluechips['symbol'] == symbol]['last'].values[0]
         price_cache[symbol] = price
@@ -52,13 +52,13 @@ if byma_data.isworkingDay():
     options_df = byma_data.get_options()
 
     # Agregar la fecha actual como columna en el DataFrame
-    # fecha_hoy = datetime.now().strftime("%Y-%m-%d")
-    # options_df['date'] = fecha_hoy
+    fecha_hoy = datetime.now().strftime("%Y-%m-%d")
+    options_df['date'] = fecha_hoy
     
     # Obtener la fecha de ayer
-    fecha_ayer = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
-    options_df['date'] = fecha_ayer
-    fecha_hoy = fecha_ayer
+    # fecha_ayer = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
+    # options_df['date'] = fecha_ayer
+    # fecha_hoy = fecha_ayer
     
     # Nombre del archivo CSV con los datos acumulados
     nombre_archivo = "opciones_historial.csv"
