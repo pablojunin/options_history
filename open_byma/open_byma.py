@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 from pytz import timezone
 from typing import List, Dict
+from datetime import datetime
 
 urllib3.disable_warnings()
 
@@ -73,12 +74,12 @@ class openBYMAdata:
         df = df[[
             "symbol", "quantityBid", "bidPrice", "offerPrice", "quantityOffer", "settlementPrice",
             "closingPrice", "imbalance", "openingPrice", "tradingHighPrice", "tradingLowPrice",
-            "previousClosingPrice", "volumeAmount", "volume", "numberOfOrders", "tradeHour",
+            "previousClosingPrice", "volumeAmount", "volume", "numberOfOrders",
             "underlyingSymbol", "maturityDate"
         ]].copy()
         df.columns = [
             'symbol', 'bid_size', 'bid', 'ask', 'ask_size', 'lastPrice', 'close', 'change', 'open', 'high', 
-            'low', 'previous_close', 'turnover', 'volume', 'operations', 'datetime', 'underlying_asset', 
+            'low', 'previous_close', 'turnover', 'volume', 'operations', 'underlying_asset', 
             'expiration'
         ]
         df['expiration' ] = pd.to_datetime(df['expiration']).dt.strftime('%Y-%m-%d')
@@ -150,18 +151,64 @@ class openBYMAdata:
         return df
 
     def __get_securities(self, endpoint: str) -> pd.DataFrame:
-        response = self.__s.post(f'https://open.bymadata.com.ar/vanoms-be-core/rest/api/bymadata/free/{endpoint}',data=self.__data, headers=self.__headers, verify=False)
-        df = pd.DataFrame()
-        if endpoint == "cedears":
-            df = pd.DataFrame(response.json())
-        else:
-            df = pd.DataFrame(response.json().get('data', []))
+        all_data = []  # Lista para almacenar datos de todas las páginas
+        page_number = 1  # Inicializar el número de página
 
-        df = df[self.__filter_columns].copy()
-        df.columns = self.__securities_columns
-        df['datetime'] = pd.to_datetime(df['datetime'])
-        df[self.__numeric_columns] = df[self.__numeric_columns].apply(pd.to_numeric, errors='coerce')
+        while True:  # Iterar hasta que no haya más páginas
+            # Construir el payload para la solicitud, incluyendo el número de página
+            data = json.dumps({
+                "page_number": page_number,
+                "excludeZeroPxAndQty": False,
+                "T2": False,
+                "T1": True,
+                "T0": False,
+                "Content-Type": "application/json"
+            })
+
+            # Realizar la solicitud a la API
+            response = self.__s.post(
+                f'https://open.bymadata.com.ar/vanoms-be-core/rest/api/bymadata/free/{endpoint}',
+                data=data,
+                headers=self.__headers,
+                verify=False
+            )
+
+            # Verificar el código de estado de la respuesta
+            if response.status_code != 200:
+                print(f"Error al obtener la página {page_number}: código {response.status_code}")
+                break
+
+            # Decodificar la respuesta JSON
+            response_json = response.json()
+            page_data = response_json.get('data', [])
+
+            # Si no hay más datos, detener el bucle
+            if not page_data:
+                break
+
+            # Agregar los datos de esta página a la lista principal
+            all_data.extend(page_data)
+            page_number += 1  # Pasar a la siguiente página
+
+        # Crear un DataFrame con todos los datos recopilados
+        df = pd.DataFrame(all_data)
+
+        if df.empty:
+            print("Advertencia: No se obtuvieron datos de la API.")
+            return pd.DataFrame()
+
+        # Filtrar columnas disponibles
+        available_columns = [col for col in self.__filter_columns if col in df.columns]
+        df = df[available_columns].copy()
+        df.columns = self.__securities_columns[:len(available_columns)]
+
+        # Manejar la columna 'datetime'
+        if 'trade' in df.columns:
+            df['datetime'] = pd.to_datetime(df.get('trade', datetime.now()), errors='coerce')
+            df['datetime'] = df['datetime'].fillna(datetime.now())
+
         return df
+
 
     def __get_fixed_income(self, endpoint: str) -> pd.DataFrame:
         
